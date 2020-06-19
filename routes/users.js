@@ -10,7 +10,7 @@ usersRouter.get('/users/:id', (req, res) => {
     if (element._id === req.params.id) { res.send(element); }
   });
 
-  res.send({ message: 'Нет пользователя с таким id' });
+  res.send({ message: 'Нет пользователя с таким id' }, 404);
 });
 
 module.exports = usersRouter;
