@@ -1,13 +1,17 @@
 const cardsRouter = require('express').Router();
+const path = require('path');
+const fs = require('fs');
 
-const cards = require('../data/cards.json');
+const cards = path.join(__dirname, '../data/cards.json');
 
 cardsRouter.get('/cards', (req, res) => {
-  res.send(cards);
+  fs.readFile(cards, 'utf8', (err, contents) => {
+    res.send(contents);
+  });
 });
 
-cardsRouter.get('*', (req, res) => {
-  res.send({ message: 'Запрашиваемый ресурс не найден' }, 404);
+cardsRouter.all('*', (req, res) => {
+  res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
 });
 
 module.exports = cardsRouter;
