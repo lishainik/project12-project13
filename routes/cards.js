@@ -9,8 +9,12 @@ cardsRouter.get('/cards', (req, res) => {
     if (err) {
       res.status(500).send({ message: 'Ошибка чтения базы данных' });
     }
-    const result = JSON.parse(contents);
-    res.json(result);
+    try {
+      const result = JSON.parse(contents);
+      res.json(result);
+    } catch (error) {
+      res.status(500).send({ message: 'Ошибка чтения базы данных' });
+    }
   });
 });
 

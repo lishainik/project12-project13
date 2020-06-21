@@ -9,8 +9,12 @@ usersRouter.get('/users', (req, res) => {
     if (err) {
       res.status(500).send({ message: 'Ошибка чтения базы данных' });
     }
-    const result = JSON.parse(contents);
-    res.send(result);
+    try {
+      const result = JSON.parse(contents);
+      res.send(result);
+    } catch (error) {
+      res.status(500).send({ message: 'Ошибка чтения базы данных' });
+    }
   });
 });
 
@@ -19,14 +23,14 @@ usersRouter.get('/users/:id', (req, res) => {
     try {
       const usersdb = JSON.parse(contents);
       if (Array.isArray(usersdb) === true) {
-        const result = usersdb.filter((element) => {
+        const result = usersdb.find((element) => {
           // eslint-disable-next-line no-underscore-dangle
           if (element._id === req.params.id) {
             return element;
           }
-          return '';
+          return undefined;
         });
-        if (result.length === 0) {
+        if (result === undefined) {
           res.status(404).send({ message: 'Нет пользователя с таким id' });
         } else {
           res.send(result);
