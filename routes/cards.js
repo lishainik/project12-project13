@@ -13,7 +13,7 @@ cardsRouter.get('/cards', (req, res) => {
       const result = JSON.parse(contents);
       res.json(result);
     } catch (error) {
-      res.status(500).send({ message: 'Ошибка чтения базы данных' });
+      res.status(500).send({ message: 'Ошибка парсинга' });
     }
   });
 });
