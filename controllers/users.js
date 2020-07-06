@@ -11,11 +11,23 @@ module.exports.createUser = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => res.send({ user }))
-    .catch(() => res.status(500).send({ message: 'Ошибка cоздания профиля' }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Ошибка валидации запроса' });
+      } else {
+        res.status(500).send({ message: 'Ошибка сервера' });
+      }
+    });
 };
 
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
-    .then((user) => res.send({ user }))
+    .then((user) => {
+      if (user === null) {
+        res.status(404).send({ message: 'Пользователь не найден' });
+      } else {
+        res.send({ user });
+      }
+    })
     .catch(() => res.status(404).send({ message: 'Пользователь не найден' }));
 };
