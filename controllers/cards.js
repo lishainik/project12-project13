@@ -23,7 +23,7 @@ module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (card === null) {
-        res.status(400).send({ message: 'Такой карточки не существует' });
+        res.status(404).send({ message: 'Такой карточки не существует' });
       } else {
         res.send({ card });
       }
