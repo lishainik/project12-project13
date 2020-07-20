@@ -24,7 +24,7 @@ module.exports.deleteCard = (req, res) => {
   Card.findById(req.params.cardId)
     .then((card) => {
       if (card === null) {
-        res.status(404).send({ message: 'Такой карточки не существует' });
+        return Promise.reject(new Error('Такой карточки не существует'));
       }
       return card;
     })
@@ -36,5 +36,5 @@ module.exports.deleteCard = (req, res) => {
         res.status(401).send({ message: 'Запрещено удалять чужие карты' });
       }
     })
-    .catch(() => res.status(404).send({ message: 'Такой карточки не существует' }));
+    .catch(() => res.status(400).send({ message: 'Такой карточки не существует' }));
 };

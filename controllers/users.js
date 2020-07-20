@@ -9,26 +9,31 @@ module.exports.getUsers = (req, res) => {
 
 module.exports.createUser = (req, res) => {
   const {
-    name, about, avatar, email,
+    name, about, avatar, email, password,
   } = req.body;
-
-  bcrypt.hash(req.body.password, 10)
-    .then((hash) => User.create({
-      name, about, avatar, email, password: hash,
-    })
-      .then((user) => res.status(201).send({
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-        email: user.email,
-      }))
-      .catch((err) => {
-        if (err.name === 'ValidationError') {
-          res.status(400).send({ message: 'Ошибка валидации запроса' });
-        } else {
-          res.status(500).send({ message: 'Ошибка сервера' });
-        }
-      }));
+  if (password === undefined || password.length === 0) {
+    res.status(401).send({ message: 'Пароль не должен быть пустым' });
+  } else {
+    bcrypt.hash(req.body.password, 10)
+      .then((hash) => User.create({
+        name, about, avatar, email, password: hash,
+      })
+        .then((user) => res.status(201).send({
+          name: user.name,
+          about: user.about,
+          avatar: user.avatar,
+          email: user.email,
+        }))
+        .catch((err) => {
+          if (err.name === 'ValidationError') {
+            res.status(400).send({ message: 'Ошибка валидации запроса' });
+          } else if (err.name === 'MongoError' && err.code === 11000) {
+            res.status(409).send({ message: 'Данный email уже зарегистрирован' });
+          } else {
+            res.status(500).send({ message: 'Ошибка валидации' });
+          }
+        }));
+  }
 };
 
 module.exports.getUserById = (req, res) => {
