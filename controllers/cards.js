@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 const Card = require('../models/card');
 
 module.exports.getCards = (req, res) => {
@@ -20,13 +21,20 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (card === null) {
         res.status(404).send({ message: 'Такой карточки не существует' });
+      }
+      return card;
+    })
+    .then((card) => {
+      if (card.owner == req.user._id) {
+        Card.findByIdAndRemove({ _id: card._id })
+          .then(() => { res.send({ card }); });
       } else {
-        res.send({ card });
+        res.status(401).send({ message: 'Запрещено удалять чужие карты' });
       }
     })
-    .catch(() => res.status(400).send({ message: 'Такой карточки не существует' }));
+    .catch(() => res.status(404).send({ message: 'Такой карточки не существует' }));
 };
