@@ -36,5 +36,11 @@ module.exports.deleteCard = (req, res) => {
         res.status(401).send({ message: 'Запрещено удалять чужие карты' });
       }
     })
-    .catch(() => res.status(400).send({ message: 'Такой карточки не существует' }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Некорректный формат ID' });
+      } else {
+        res.status(404).send({ message: 'Такой карточки не существует' });
+      }
+    });
 };

@@ -12,7 +12,7 @@ module.exports.createUser = (req, res) => {
     name, about, avatar, email, password,
   } = req.body;
   if (password === undefined || password.length === 0) {
-    res.status(401).send({ message: 'Пароль не должен быть пустым' });
+    res.status(400).send({ message: 'Пароль не должен быть пустым' });
   } else {
     bcrypt.hash(req.body.password, 10)
       .then((hash) => User.create({
@@ -45,5 +45,5 @@ module.exports.getUserById = (req, res) => {
         res.send({ user });
       }
     })
-    .catch(() => res.status(404).send({ message: 'Пользователь не найден' }));
+    .catch(() => res.status(400).send({ message: 'Некорректный формат ID' }));
 };
