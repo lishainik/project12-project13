@@ -1,30 +1,44 @@
 /* eslint-disable eqeqeq */
 const Card = require('../models/card');
+const NotFoundError = require('../errors/not-found-err');
+const AuthorizationError = require('../errors/auth-err');
+const BadRequestError = require('../errors/bad-request-err');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ cards }))
-    .catch(() => res.status(500).send({ message: 'Ошибка чтения базы данных' }));
+    .then((err) => {
+      if (err) { throw new Error('Ошибка чтения базы данных'); }
+    })
+    .catch(next);
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.send({ card }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Ошибка валидации запроса' });
-      } else {
-        res.status(500).send({ message: 'Ошибка сервера' });
+    .then((err) => {
+      if (err) {
+        if (err.name === 'ValidationError') {
+          throw new BadRequestError('Ошибка валидации запроса');
+        } else {
+          throw new Error('Ошибка сервера');
+        }
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        throw new BadRequestError('Некорректный формат ID');
+      }
+    })
     .then((card) => {
       if (card === null) {
-        return Promise.reject(new Error('Такой карточки не существует'));
+        throw new NotFoundError('Такой карточки не существует');
       }
       return card;
     })
@@ -33,14 +47,8 @@ module.exports.deleteCard = (req, res) => {
         Card.findByIdAndRemove({ _id: card._id })
           .then(() => { res.send({ card }); });
       } else {
-        res.status(401).send({ message: 'Запрещено удалять чужие карты' });
+        throw new AuthorizationError('Запрещено удалять чужие карты');
       }
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Некорректный формат ID' });
-      } else {
-        res.status(404).send({ message: 'Такой карточки не существует' });
-      }
-    });
+    .catch(next);
 };
