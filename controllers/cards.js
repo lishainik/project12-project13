@@ -7,8 +7,8 @@ const BadRequestError = require('../errors/bad-request-err');
 module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ cards }))
-    .then((err) => {
-      if (err) { throw new Error('Ошибка чтения базы данных'); }
+    .catch(() => {
+      throw new Error('Ошибка чтения базы данных');
     })
     .catch(next);
 };
