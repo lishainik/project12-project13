@@ -1,18 +1,24 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
+const NotFoundError = require('../errors/not-found-err');
+const BadRequestError = require('../errors/bad-request-err');
+const ConflictError = require('../errors/conflict-err');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ users }))
-    .catch(() => res.status(500).send({ message: 'Ошибка чтения базы данных' }));
+    .catch(() => {
+      throw new Error('Ошибка чтения базы данных');
+    })
+    .catch(next);
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
   if (password === undefined || password.length === 0) {
-    res.status(400).send({ message: 'Пароль не должен быть пустым' });
+    throw new BadRequestError('Пароль не должен быть пустым');
   } else {
     bcrypt.hash(req.body.password, 10)
       .then((hash) => User.create({
@@ -26,24 +32,28 @@ module.exports.createUser = (req, res) => {
         }))
         .catch((err) => {
           if (err.name === 'ValidationError') {
-            res.status(400).send({ message: 'Ошибка валидации запроса' });
+            throw new BadRequestError('Ошибка валидации запроса');
           } else if (err.name === 'MongoError' && err.code === 11000) {
-            res.status(409).send({ message: 'Данный email уже зарегистрирован' });
+            throw new ConflictError('Данный email уже зарегистрирован');
           } else {
-            res.status(500).send({ message: 'Ошибка валидации' });
+            throw new Error('Ошибка валидации');
           }
-        }));
+        }))
+      .catch(next);
   }
 };
 
-module.exports.getUserById = (req, res) => {
+module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
+    .catch(() => {
+      throw new BadRequestError('Некорректный формат ID');
+    })
     .then((user) => {
       if (user === null) {
-        res.status(404).send({ message: 'Пользователь не найден' });
+        throw new NotFoundError('Пользователь не найден');
       } else {
         res.send({ user });
       }
     })
-    .catch(() => res.status(400).send({ message: 'Некорректный формат ID' }));
+    .catch(next);
 };

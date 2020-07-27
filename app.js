@@ -1,12 +1,16 @@
+/* eslint-disable no-unused-vars */
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
+const { celebrate, Joi, errors } = require('celebrate');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 const usersRoutes = require('./routes/users');
 const cardsRoutes = require('./routes/cards');
 const { createUser } = require('./controllers/users');
 const { login } = require('./controllers/login');
 const auth = require('./middlewares/auth');
+const NotFoundError = require('./errors/not-found-err');
 
 const { PORT = 3000 } = process.env;
 
@@ -22,14 +26,42 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useFindAndModify: false,
 });
 
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.use(requestLogger);
+
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), login);
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().required().min(2).max(30),
+    about: Joi.string().required().min(2).max(30),
+    avatar: Joi.string().required(),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), createUser);
 
 app.use('/', auth, usersRoutes);
 app.use('/', auth, cardsRoutes);
 
 app.use((req, res) => {
-  res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+  throw new NotFoundError('Запрашиваемый ресурс не найден');
+});
+
+app.use(errorLogger);
+
+app.use(errors());
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message } = err;
+  res.status(statusCode).send({
+    message: statusCode === 500
+      ? 'На сервере произошла ошибка'
+      : message,
+  });
 });
 
 app.listen(PORT, () => {
