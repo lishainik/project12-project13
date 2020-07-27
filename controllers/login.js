@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const AuthorizationError = require('../errors/auth-err');
 
+const { NODE_ENV, JWT_SECRET } = process.env;
+
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   if (password === undefined || password.length === 0) {
@@ -22,7 +24,7 @@ module.exports.login = (req, res, next) => {
           })
         // eslint-disable-next-line no-shadow
           .then((user) => {
-            const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+            const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
             res.cookie('jwt', `Bearer ${token}`, { maxAge: 3600000 * 24 * 7, httpOnly: true });
             res.status(200).send({ message: 'Успешный логин' });
           });
