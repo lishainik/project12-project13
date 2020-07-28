@@ -17,7 +17,7 @@ module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.send({ card }))
-    .then((err) => {
+    .catch((err) => {
       if (err) {
         if (err.name === 'ValidationError') {
           throw new BadRequestError('Ошибка валидации запроса');
